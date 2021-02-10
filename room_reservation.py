@@ -5,6 +5,7 @@ from selenium.common.exceptions import NoSuchElementException
 from dotenv import load_dotenv
 from argparse import ArgumentParser
 from datetime import date
+from datetime import datetime as dt
 import time
 import os 
 import sys
@@ -96,6 +97,7 @@ def get_span(start):
 
 
 def main():
+    print("Loading...")
     load_dotenv()
     ACCOUNT = os.getenv("ACCOUNT")
     PW = os.getenv("PW")
@@ -129,12 +131,13 @@ def main():
     print("Succeed")
 
     today = date.today()
-    if(setting['reserve_date']==today.weekday()+1):	
+    cur_hour, cur_min = dt.now().strftime("%H"), dt.now().strftime("%M")
+    if(setting['reserve_date']==today.weekday()+1 and (int(setting['start_time'][0:2])>int(cur_hour) or (int(setting['start_time'][0:2])==int(cur_hour) and int(setting['start_time'][3:5])>int(cur_min)))):	
         d2 = today.strftime("%B %-d, %Y")
         d1 = calendar.day_name[today.weekday()]
         reserve_date = f'Selected. {d1}, {d2}'
     else:
-        find_date = today
+        find_date = today + datetime.timedelta(1)
         while find_date.weekday() != setting['reserve_date']-1:
             find_date += datetime.timedelta(1)
         d2 = find_date.strftime("%B %-d, %Y")
@@ -173,7 +176,7 @@ def main():
         
         try:
             driver.find_element_by_xpath("//*[text()='查詢當日所有空間']").click()
-            print("Succeed")
+            print("Verified")
             time.sleep(1)
         except NoSuchElementException:
             print("Fail")
@@ -192,6 +195,7 @@ def main():
             #driver.find_element_by_xpath("//*[text()='確認預約資訊']").click()
             #driver.close()
         except ElementClickInterceptedException:
+            print("Fail to reserve")
             driver.back()
 
     print("There is no room available QAQ")
